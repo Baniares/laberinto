@@ -21,14 +21,14 @@ public class Laberinto implements ApplicationListener {
 	private float dimension;
 	private String[][] laberinto;
 	private boolean norte = false, sur = false, este = false, oeste = false,
-			pasar, terminado = false;
+			pasar, terminado = false,recorrido=false;
 	private long lastact;
 
 	@Override
 	public void create() {
-		lastact=TimeUtils.nanoTime();
-		tamaño = 200;
-		dimension = 720/(tamaño*2+1);
+		lastact = TimeUtils.nanoTime();
+		tamaño = 88;
+		dimension = 720 / (tamaño * 2 + 1);
 		ex = MathUtils.random(0, tamaño - 1);
 		ey = MathUtils.random(0, tamaño - 1);
 		sx = MathUtils.random(0, tamaño - 1);
@@ -37,6 +37,9 @@ public class Laberinto implements ApplicationListener {
 		currentY = (ey * 2) + 1;
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false, 1280, 720);
+		// camera.zoom=(float)0.1;
+		// camera.viewportHeight=dimension*tamaño;
+		// camera.viewportWidth=(100*camera.viewportHeight)/(float)56.25;
 		entrada = new Texture(Gdx.files.internal("data/entrada.png"));
 		salida = new Texture(Gdx.files.internal("data/salida.png"));
 		pared = new Texture(Gdx.files.internal("data/pared.png"));
@@ -85,14 +88,101 @@ public class Laberinto implements ApplicationListener {
 					batch.draw(pasillo, 280 + (i * dimension), 720 - dimension
 							- (j * dimension), dimension, dimension);
 				}
+				if (laberinto[i][j].equals("L+") || laberinto[i][j].equals("V+")){
+					batch.draw(pasillo, 280 + (i * dimension), 720 - dimension - (j * dimension), dimension, dimension);
+					batch.draw(cursor, 280 + (i * dimension), 720 - dimension - (j * dimension), dimension/2, dimension/2);
+				}
 			}
 		}
-		if(!terminado)
-			batch.draw(cursor, 280+(currentX*dimension), 720-dimension-(currentY*dimension), dimension, dimension);
+		if (!terminado)
+			batch.draw(cursor, 280 + (currentX * dimension), 720 - dimension
+					- (currentY * dimension), dimension, dimension);
 		batch.end();
-		if (!terminado && TimeUtils.nanoTime()-lastact>500000) {
+		// camera.position.x=280+(currentX*dimension);
+		// camera.position.y=720-dimension-(currentY*dimension);
+		// camera.update();
+		if (!terminado && TimeUtils.nanoTime() - lastact > 500000) {
 			armar();
+		} else if(!recorrido) {
+			recorrer((ex * 2) + 1, (ey * 2) + 1);
+			recorrido=true;
 		}
+	}
+
+	private boolean recorrer(int x, int y) {
+		if (x > 0 && x < (tamaño * 2) + 1 && y > 0 && y < (tamaño * 2) + 1) {
+			pasar = false;
+			if (laberinto[x][y].equals("SV")) {
+				return true;
+			} else {
+				boolean camino=false;
+				for(int i=0;i<4;i++){
+					switch(i){
+					case 0:
+						if(laberinto[x][y-1].equals("L")){
+							laberinto[x][y-1]="L+";
+							if(!laberinto[x][y-2].equals("SV"))
+								laberinto[x][y-2]="V+";
+							camino=recorrer(x,y-2);
+							if(!camino){
+								laberinto[x][y-1]="L";
+								laberinto[x][y-2]="V";
+							}else{
+								return camino;
+							}
+						}
+						break;
+					case 1:
+						if(laberinto[x+1][y].equals("L")){
+							laberinto[x+1][y]="L+";
+							if(!laberinto[x+2][y].equals("SV"))
+								laberinto[x+2][y]="V+";
+							camino=recorrer(x+2,y);
+							if(!camino){
+								laberinto[x+1][y]="L";
+								laberinto[x+2][y]="V";
+							}else{
+								return camino;
+							}
+						}
+						break;
+					case 2:
+						if(laberinto[x][y+1].equals("L")){
+							laberinto[x][y+1]="L+";
+							if(!laberinto[x][y+2].equals("SV"))
+								laberinto[x][y+2]="V+";
+							camino=recorrer(x,y+2);
+							if(!camino){
+								laberinto[x][y+1]="L";
+								laberinto[x][y+2]="V";
+							}else{
+								return camino;
+							}
+						}
+						break;
+					case 3:
+						if(laberinto[x-1][y].equals("L")){
+							laberinto[x-1][y]="L+";
+							if(!laberinto[x-2][y].equals("SV"))
+								laberinto[x-2][y]="V+";
+							camino=recorrer(x-2,y);
+							if(!camino){
+								laberinto[x-1][y]="L";
+								laberinto[x-2][y]="V";
+							}else{
+								return camino;
+							}
+						}
+						break;
+					}
+				}
+				if(!camino)
+					return false;
+			}
+		} else {
+			return false;
+		}
+		return true;
 	}
 
 	private void armar() {
@@ -256,13 +346,13 @@ public class Laberinto implements ApplicationListener {
 				if (laberinto[i][j].equals("V") || laberinto[i][j].equals("E")
 						|| laberinto[i][j].equals("SV")) {
 					visitados++;
-					if (visitados >= tamaño * tamaño){
-						terminado=true;
+					if (visitados >= tamaño * tamaño) {
+						terminado = true;
 					}
 				}
 			}
 		}
-		lastact=TimeUtils.nanoTime();
+		lastact = TimeUtils.nanoTime();
 	}
 
 	@Override
