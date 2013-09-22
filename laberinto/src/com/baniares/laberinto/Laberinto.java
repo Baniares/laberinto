@@ -17,7 +17,7 @@ public class Laberinto implements ApplicationListener {
 	private SpriteBatch batch;
 	private Texture entrada, salida, pared, pasillo, cursor;
 	private int tamaño, ex, ey, sx, sy, visitados, currentX, currentY,
-			direccion;
+			direccion,solx,soly;
 	private float dimension;
 	private String[][] laberinto;
 	private boolean norte = false, sur = false, este = false, oeste = false,
@@ -27,7 +27,7 @@ public class Laberinto implements ApplicationListener {
 	@Override
 	public void create() {
 		lastact = TimeUtils.nanoTime();
-		tamaño = 88;
+		tamaño = 40;
 		dimension = 720 / (tamaño * 2 + 1);
 		ex = MathUtils.random(0, tamaño - 1);
 		ey = MathUtils.random(0, tamaño - 1);
@@ -35,6 +35,8 @@ public class Laberinto implements ApplicationListener {
 		sy = MathUtils.random(0, tamaño - 1);
 		currentX = (ex * 2) + 1;
 		currentY = (ey * 2) + 1;
+		solx=currentX;
+		soly=currentY;
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false, 1280, 720);
 		// camera.zoom=(float)0.1;
@@ -104,14 +106,13 @@ public class Laberinto implements ApplicationListener {
 		if (!terminado && TimeUtils.nanoTime() - lastact > 500000) {
 			armar();
 		} else if(!recorrido) {
-			recorrer((ex * 2) + 1, (ey * 2) + 1);
-			recorrido=true;
+			recorrido=recorrer(solx, soly);
 		}
 	}
 
 	private boolean recorrer(int x, int y) {
+		lastact=TimeUtils.nanoTime();
 		if (x > 0 && x < (tamaño * 2) + 1 && y > 0 && y < (tamaño * 2) + 1) {
-			pasar = false;
 			if (laberinto[x][y].equals("SV")) {
 				return true;
 			} else {
@@ -185,6 +186,15 @@ public class Laberinto implements ApplicationListener {
 		return true;
 	}
 
+	/*
+ 	private boolean generar(int x, int y){
+		boolean avanzar=false;
+		while(!avanzar){
+			
+		}
+		return true;
+	}
+	*/
 	private void armar() {
 		pasar = false;
 		while (norte && sur && este && oeste) {
